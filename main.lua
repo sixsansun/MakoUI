@@ -18,7 +18,7 @@ local C = {
     BORDER = Color3.fromRGB(37, 40, 44),
     BORDER_DARK = Color3.fromRGB(18, 21, 24),
     TEXT = Color3.fromRGB(244, 246, 249),
-    TEXT_DISABLED = Color3.fromRGB(82, 86, 93),
+    TEXT_DISABLED = Color3.fromRGB(126, 132, 141),
     ICON = Color3.fromRGB(220, 223, 228),
     OFF = Color3.fromRGB(25, 28, 32),
     ACCENT = Color3.fromRGB(0, 190, 255),
@@ -204,15 +204,77 @@ function MakoUI:CreateWindow(o)
         Parent=content
     })
 
+    local key=o.ToggleKey or Enum.KeyCode.RightShift
+
     local api={
         Gui=gui, Main=main, Logo=logo, Accent=accent, Bright=bright,
-        Assets=assets, Tabs={}, NavItems={}, ActiveTab=nil
+        Assets=assets, Tabs={}, NavItems={}, ActiveTab=nil,
+        Content=content, TabsBar=tabsBar, Pages=pages,
+        SidebarPages={}, ToggleKey=key
     }
 
     function api:SetLogo(id) self.Logo.Image=Asset(id) end
     function api:SetVisible(v) self.Gui.Enabled=v end
     function api:Toggle() self.Gui.Enabled=not self.Gui.Enabled end
     function api:Destroy() self.Gui:Destroy() end
+
+    function api:SetToggleKey(newKey)
+        if typeof(newKey)=="EnumItem" and newKey.EnumType==Enum.KeyCode then
+            key=newKey
+            self.ToggleKey=newKey
+            return true
+        end
+        return false
+    end
+
+    function api:GetToggleKey()
+        return key
+    end
+
+    function api:AddSidebarPage(name)
+        name=tostring(name or "Page")
+
+        if self.SidebarPages[name] then
+            return self.SidebarPages[name]
+        end
+
+        local page=New("Frame",{
+            Name=name.."SidebarPage",
+            Position=UDim2.fromOffset(18,15),
+            Size=UDim2.new(1,-34,1,-30),
+            BackgroundTransparency=1,
+            BorderSizePixel=0,
+            Visible=false,
+            Parent=content
+        })
+
+        self.SidebarPages[name]=page
+        return page
+    end
+
+    function api:ShowSidebarPage(name)
+        tabsBar.Visible=false
+        pages.Visible=false
+
+        for pageName,page in pairs(self.SidebarPages) do
+            page.Visible=(pageName==name)
+        end
+    end
+
+    function api:ShowControls()
+        for _,page in pairs(self.SidebarPages) do
+            page.Visible=false
+        end
+
+        tabsBar.Visible=true
+        pages.Visible=true
+
+        if self.ActiveTab then
+            self.ActiveTab.Page.Visible=true
+        elseif self.Tabs[1] then
+            self.Tabs[1]:Select()
+        end
+    end
 
     function api:AddNavIcon(imageId, callback)
         local index=#self.NavItems+1
@@ -265,16 +327,33 @@ function MakoUI:CreateWindow(o)
     end
 
     function api:AddDefaultSidebar(callback)
-        local keys={"Code","Folder","Controls","Document","Cubes","Settings"}
-        for index,key in ipairs(keys) do
-            self:AddNavIcon(self.Assets[key],function()
-                for _,it in ipairs(self.NavItems) do it:SetActive(false) end
+        local keys={"Code","Folder","Controls","Document","Settings"}
+
+        for index,keyName in ipairs(keys) do
+            self:AddNavIcon(self.Assets[keyName],function()
+                for _,it in ipairs(self.NavItems) do
+                    it:SetActive(false)
+                end
+
                 local clicked=self.NavItems[index]
-                if clicked then clicked:SetActive(true) end
-                if callback then callback(key) end
+                if clicked then
+                    clicked:SetActive(true)
+                end
+
+                if callback then
+                    callback(keyName)
+                end
             end)
         end
-        if self.NavItems[5] then self.NavItems[5]:SetActive(true) end
+
+        -- Controls par défaut.
+        if self.NavItems[3] then
+            self.NavItems[3]:SetActive(true)
+        end
+
+        if callback then
+            task.defer(callback,"Controls")
+        end
     end
 
     function api:AddTab(name)
@@ -794,9 +873,10 @@ function MakoUI:CreateWindow(o)
 
     Drag(sidebar,main)
 
-    local key=o.ToggleKey or Enum.KeyCode.RightShift
     UIS.InputBegan:Connect(function(i,processed)
-        if not processed and i.KeyCode==key then gui.Enabled=not gui.Enabled end
+        if not processed and i.KeyCode==key then
+            gui.Enabled=not gui.Enabled
+        end
     end)
 
 
@@ -908,7 +988,7 @@ function MakoUI:CreateWindow(o)
             Size=UDim2.new(1,-28,0,25),
             BackgroundTransparency=1,
             Text=message,
-            TextColor3=Color3.fromRGB(177,184,192),
+            TextColor3=Color3.fromRGB(198,205,214),
             TextSize=11,
             Font=Enum.Font.GothamMedium,
             TextWrapped=true,
