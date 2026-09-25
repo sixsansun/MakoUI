@@ -809,7 +809,8 @@ function MakoUI:CreateWindow(o)
 
     local notificationHolder=New("Frame",{
         Name="Notifications",
-        Position=UDim2.fromOffset(18,18),
+        AnchorPoint=Vector2.new(1,0),
+        Position=UDim2.new(1,-18,0,18),
         Size=UDim2.fromOffset(330,0),
         AutomaticSize=Enum.AutomaticSize.Y,
         BackgroundTransparency=1,
@@ -845,7 +846,7 @@ function MakoUI:CreateWindow(o)
 
         local card=New("Frame",{
             Name="Notification",
-            Position=UDim2.fromOffset(-365,0),
+            Position=UDim2.fromOffset(365,0),
             Size=UDim2.fromScale(1,1),
             BackgroundColor3=Color3.fromRGB(3,5,7),
             BackgroundTransparency=.02,
@@ -969,7 +970,7 @@ function MakoUI:CreateWindow(o)
             local exitTween=TweenService:Create(
                 card,
                 TweenInfo.new(.28,Enum.EasingStyle.Quart,Enum.EasingDirection.In),
-                {Position=UDim2.fromOffset(-365,0)}
+                Position=UDim2.fromOffset(365,0),
             )
             exitTween:Play()
             exitTween.Completed:Connect(function()
